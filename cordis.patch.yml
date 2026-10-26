@@ -1,0 +1,10 @@
+# dsh-quota-pets 的 bundle patch。
+#
+# 安装：
+#   dsh plugin --profile <name> add github:DarkDarkdDarkWine/dsh-quota-pets
+#
+# 桌宠本体全在 client 半（lib/client.js），宿主半只负责把 assets/ 里的
+# 自定义形象文件同源伺服给浏览器。
+- insert:
+    - id: dsh-quota-pets
+      name: 'dsh-quota-pets'

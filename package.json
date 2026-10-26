@@ -1,0 +1,50 @@
+{
+  "name": "dsh-quota-pets",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness client plugin: chibi pets for your LLM coding plans (GLM / MiniMax / Kimi / DeepSeek) — mood follows quota usage from dsh-quota-hub, the active session's model gets highlighted.",
+  "type": "module",
+  "main": "./lib/index.js",
+  "files": [
+    "lib",
+    "assets",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "pet",
+    "quota",
+    "coding-plan",
+    "glm",
+    "minimax",
+    "kimi",
+    "deepseek"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DarkDarkdDarkWine/dsh-quota-pets.git"
+  }
+}
