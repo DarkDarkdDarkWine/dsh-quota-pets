@@ -39,17 +39,13 @@
 - 其它悬停：`GLM 已用 45.1% · 5h窗口 · 3 时 20 分后重置`
 - 错误：`GLM：HTTP 401 …`／未配 Key：`还没配 Key，查不了额度`
 
-## D. 形象素材规格
+## D. 形象素材规格（已升级，见 `pet-contract.md`）
 
-- 文件命名：`<provider>[-状态].png`，provider ∈ `glm | minimax | kimi | deepseek`，
-  状态 ∈ `warn | critical | work`（基础形象不带后缀）。
-- 回退链：`work → critical → warn → base → 内置 SVG 占位`。
-- 扩展名支持 `png / apng / gif / webp / svg / jpg`；**想要图内动画就用
-  GIF / APNG / 动图 WebP**（CSS 动作照样叠加在整张图上）。
-- 尺寸：显示宽 64 / 88 / 112px 三档（用户可切），图片等比缩放；
-  建议出图 512–1024 宽、透明底、竖构图、全身、脚下留白。
-- 投放方式：扔进插件 `assets/` 目录（≤30s 自动生效，无需刷新），
-  或右键「换形象…」选本地图（≤1.5MB，存浏览器）。
+> 本文其余章节仍是当前已发布代码的行为描述；**出图请以
+> `docs/pet-contract.md`（v1，已冻结）为准**：一宠一目录
+> `assets/<petId>/{idle,working,done,error,sleeping}.png|gif|apng|webp`，
+> 方形 1024×1024 透明底、足底基线 92%，旧扁平点分命名（`<provider>.warn.png`
+> 等）已废弃。回退链：`目标状态 → idle → 内置 SVG 占位`。
 
 ## E. 设计建议（每只出几张、动作怎么给）
 

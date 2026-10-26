@@ -1,13 +1,19 @@
-把 Codex / AI 出的形象图直接扔进这个目录，刷新页面即生效。
+形象图放这里（docs/pet-contract.md 是完整规范）。
 
-命名规则（provider ∈ glm / minimax / kimi / deepseek）：
+目录结构（每只宠物一个文件夹，一态一文件）：
 
-  glm.png              基础形象（余量充足时也用它）
-  glm.warn.png         可选：用量 ≥70% 焦虑态
-  glm.critical.png     可选：用量 ≥90% 躺平态
-  glm.work.png         可选：正在干活态
+  assets/deepseek/idle.webp      待机循环动画
+  assets/deepseek/idle.png       待机静态兜底
+  assets/deepseek/working.webp   干活循环
+  assets/deepseek/done.webp      一次完成庆祝（~3s 后回 idle）
+  assets/deepseek/error.webp     出错持帧（到下次 run）
+  assets/deepseek/sleeping.webp  空闲 10 分钟睡觉
 
-支持 png / apng / gif / webp / svg / jpg；缺的变体自动回退基础形象，
-基础形象也缺则用内置 SVG 占位。建议透明底、竖构图、全身立绘。
+宠物文件夹：glm / minimax / kimi / deepseek / default
+状态名：idle / working / done / error / sleeping（Batch 2: waiting / wake / stumble）
 
-也可以在页面上右键宠物 → 「换形象…」选本地图（≤1.5MB，存浏览器）。
+动画统一 webp（或 apng），静态兜底 png。缺的按链回退：
+<state> 动画 → <state> 静态 → idle 动画 → idle 静态 → 内置 SVG 占位。
+
+放好文件后刷新页面即生效（宿主 3 秒重扫）。
+写完素材跑 `python3 scripts/validate-assets.py` 校验尺寸/透明角/字节预算。
