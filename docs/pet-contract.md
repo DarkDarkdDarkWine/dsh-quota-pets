@@ -1,8 +1,12 @@
-# Pet Asset Contract v1.2 (frozen for Batch 1)
+# Pet Asset Contract v1.3 (frozen for Batch 1)
 
 Single source of truth shared by the plugin builder and the artist (image
 generation). If either side needs something not covered here, the contract is
 amended first — code is never patched around a gap.
+
+Changelog v1.2 → v1.3: `working` loop relaxed to 0.8–1.6 s and ≤ 14 frames —
+the confirmed eating cycle (bowl → chopsticks → mouth → chew → back) does
+not fit the typing-era 0.4–0.8 s; validator frame cap updated to match.
 
 Changelog v1.1 → v1.2: single animated format (WebP); pilot scope — one full
 pet first, not four at once; frame-rate and frame-count caps make the byte
@@ -45,7 +49,7 @@ hyphens anywhere.
 | State | Type | Trigger | Loop rule | Code displays it |
 |---|---|---|---|---|
 | `idle` | loop | default, no run in progress | seamless, 2–4 s | until state changes |
-| `working` | loop | run in progress | seamless, 0.4–0.8 s | until run ends |
+| `working` | loop | run in progress | seamless, 0.8–1.6 s | until run ends |
 | `done` | one-shot | run ended cleanly (session-stable, run ≥ 4 s) | ≤ 1.2 s, hold last frame | ~3 s, then back to idle |
 | `error` | one-shot, hold | run ended with an error | ≤ 1.2 s, hold last frame | until the next run starts |
 | `sleeping` | loop | idle timeout ≈ 10 min (no run, no interaction) | seamless, 3–4 s | until woken |
@@ -99,7 +103,7 @@ dimming, working glow) may touch every pixel.
    `working`'s static shows mid-keystroke, so reduced-motion mode never
    looks idle).
 3. Frame caps (make the byte budget achievable): ≤ 12 fps everywhere; frame
-   count ≤ 36 (`idle`), ≤ 10 (`working`), ≤ 14 (`done`), ≤ 14 (`error`),
+   count ≤ 36 (`idle`), ≤ 14 (`working`), ≤ 14 (`done`), ≤ 14 (`error`),
    ≤ 48 (`sleeping`). Lossy WebP is fine — sprites tolerate it.
 4. Byte budget: animated ≤ 400 KB per file, static ≤ 150 KB per file.
 
@@ -121,7 +125,7 @@ file degrades gracefully, never to broken UI.
 
 ## 8. Enforcement
 
-`scripts/validate-assets.mjs` checks every delivered file against this
+`scripts/validate-assets.py` checks every delivered file against this
 contract: dimensions, alpha background, byte budgets, badge-corner
 transparency, foot baseline of rest poses, and first/last-frame
 pose-similarity (idle vs one-shot endings). Deliveries that fail validation
