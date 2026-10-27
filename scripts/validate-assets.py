@@ -31,7 +31,7 @@ except ImportError:
 
 CANVAS = 512
 CORNER_RATIO = 0.18  # top-right badge zone, contract §5
-ANIM_BUDGET = 400_000
+ANIM_BUDGET = 750_000
 STATIC_BUDGET = 150_000
 FRAME_CAPS = {"idle": 36, "working": 14, "done": 14, "error": 14, "sleeping": 48, "waiting": 24, "wake": 14, "stumble": 14}
 FPS_CAP = 12.0

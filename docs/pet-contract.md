@@ -1,8 +1,16 @@
-# Pet Asset Contract v1.3 (frozen for Batch 1)
+# Pet Asset Contract v1.4 (frozen for Batch 1)
 
 Single source of truth shared by the plugin builder and the artist (image
 generation). If either side needs something not covered here, the contract is
 amended first — code is never patched around a gap.
+
+Changelog v1.3 → v1.4: animated byte budget 400 KB → 750 KB per file.
+Measured reality: full-body secondary motion (tail, ears, ahoge) on every
+frame pushes a 24-frame `idle` to ~540 KB and a 36-frame `sleeping` to
+~740 KB at q50 — the old 400 KB assumed localized hand motion. Static
+budget unchanged. Builder-side alpha posterization (≤ 8 levels) is an
+allowed processing step to fit the budget; at ≤ 112 px display size it is
+invisible. Guideline: all animated files for one pet together ≤ 2.2 MB.
 
 Changelog v1.2 → v1.3: `working` loop relaxed to 0.8–1.6 s and ≤ 14 frames —
 the confirmed eating cycle (bowl → chopsticks → mouth → chew → back) does
@@ -105,7 +113,7 @@ dimming, working glow) may touch every pixel.
 3. Frame caps (make the byte budget achievable): ≤ 12 fps everywhere; frame
    count ≤ 36 (`idle`), ≤ 14 (`working`), ≤ 14 (`done`), ≤ 14 (`error`),
    ≤ 48 (`sleeping`). Lossy WebP is fine — sprites tolerate it.
-4. Byte budget: animated ≤ 400 KB per file, static ≤ 150 KB per file.
+4. Byte budget: animated ≤ 750 KB per file, static ≤ 150 KB per file.
 
 ## 6. Transitions
 
