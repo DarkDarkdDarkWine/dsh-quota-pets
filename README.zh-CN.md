@@ -6,7 +6,7 @@
 
 | 宠物 | Provider | 主题色 |
 |---|---|---|
-| 🦉 猫头鹰博士 | GLM（z.ai / bigmodel） | 紫 `#8B7CF6` |
+| 🦊 耳廓狐博士 | GLM（z.ai / bigmodel） | 紫 `#8B7CF6` |
 | 🐹 小仓鼠 | MiniMax | 粉 `#FF7DA0` |
 | 🐰 月兔 | Kimi（Moonshot） | 金黄 `#F5C445` |
 | 🐋 小鲸鱼 | DeepSeek | 蓝 `#4D6BFE` |

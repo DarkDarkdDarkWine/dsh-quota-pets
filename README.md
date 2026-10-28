@@ -4,7 +4,7 @@
 
 | Pet | Provider | Theme color |
 |---|---|---|
-| 🦉 Owl Scholar | GLM (z.ai / bigmodel) | Purple `#8B7CF6` |
+| 🦊 Fennec Scholar | GLM (z.ai / bigmodel) | Purple `#8B7CF6` |
 | 🐹 Little Hamster | MiniMax | Pink `#FF7DA0` |
 | 🐰 Moon Rabbit | Kimi (Moonshot) | Gold `#F5C445` |
 | 🐋 Little Whale | DeepSeek | Blue `#4D6BFE` |
