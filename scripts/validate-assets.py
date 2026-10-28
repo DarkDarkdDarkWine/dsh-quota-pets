@@ -32,7 +32,8 @@ except ImportError:
 CANVAS = 512
 CORNER_RATIO = 0.18  # top-right badge zone, contract §5
 ANIM_BUDGET = 750_000
-STATIC_BUDGET = 150_000
+STATIC_BUDGET = 150_000          # .png statics
+STATIC_LOSSY_BUDGET = 100_000    # <state>-static.webp (contract v1.5)
 FRAME_CAPS = {"idle": 36, "working": 14, "done": 14, "error": 14, "sleeping": 48, "waiting": 24, "wake": 14, "stumble": 14}
 FPS_CAP = 12.0
 PET_IDS = {"glm", "minimax", "kimi", "deepseek", "default"}
@@ -61,13 +62,17 @@ def frames_of(img: Image.Image) -> list[Image.Image]:
 def check_file(path: Path) -> None:
     rel = str(path)
     stem, ext = path.stem, path.suffix.lower()
-    state = stem
-    animated = ext in ANIM_EXT
+    # `<state>-static.<ext>` = explicit static slot (contract v1.5); extension
+    # then classifies everything else (.webp/.apng/.gif animated, .png static).
+    forced_static = stem.lower().endswith("-static")
+    state = stem[: -len("-static")].lower() if forced_static else stem
+    animated = ext in ANIM_EXT and not forced_static
     if ext not in ANIM_EXT | STATIC_EXT:
         err(f"{rel}: unexpected extension {ext} (use .webp for animated, .png for static)")
         return
     size = path.stat().st_size
-    budget = ANIM_BUDGET if animated else STATIC_BUDGET
+    budget = (ANIM_BUDGET if animated else
+              STATIC_LOSSY_BUDGET if forced_static and ext in ANIM_EXT else STATIC_BUDGET)
     if size > budget:
         err(f"{rel}: {size} bytes exceeds {'animated' if animated else 'static'} budget {budget}")
     try:

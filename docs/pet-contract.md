@@ -1,8 +1,18 @@
-# Pet Asset Contract v1.4 (frozen for Batch 1)
+# Pet Asset Contract v1.5 (frozen for Batch 1)
 
 Single source of truth shared by the plugin builder and the artist (image
 generation). If either side needs something not covered here, the contract is
 amended first — code is never patched around a gap.
+
+Changelog v1.4 → v1.5: statics may ship as `<state>-static.webp` (lossy,
+≤ 100 KB) when the PNG form cannot fit 150 KB. Measured reality: the GLM
+fennec (fur + book + bells) is entropy-limited at ~280 KB even quantized
+to 64 colors, while a q75 lossy WebP static is ~30 KB with better
+fidelity. Simple art keeps using `<state>.png`. The builder may also
+uniformly decimate loop frames (preserving loop duration; only fps drops)
+when a state cannot fit its byte budget — used for detail-rich `sleeping`
+loops (fur entropy floors at ~830 KB at 36 frames; 24 frames ≈ 560 KB
+with better per-frame quality). Per-pet animated guideline: ≤ 3 MB.
 
 Changelog v1.3 → v1.4: animated byte budget 400 KB → 750 KB per file.
 Measured reality: full-body secondary motion (tail, ears, ahoge) on every
@@ -106,14 +116,11 @@ dimming, working glow) may touch every pixel.
    generated only after the pilot renders correctly in the plugin. Style
    consistency across pets comes from the shared style guide, not from
    generating them simultaneously.
-2. Per state: `<state>.webp` (animated) **and** `<state>.png` (static
-   fallback = representative key pose of the state, not frame 1 — e.g.
-   `working`'s static shows mid-keystroke, so reduced-motion mode never
-   looks idle).
+2. Per state: `<state>.webp` (animated) **and** a static fallback (= representative key pose of the state, not frame 1 — e.g. `working`'s static shows mid-keystroke, so reduced-motion mode never looks idle). Static form is either `<state>.png` (≤ 150 KB) or, when the PNG is entropy-limited above that budget (detail-rich art), `<state>-static.webp` (lossy, ≤ 100 KB). The `-static` suffix always lands in the static slot regardless of extension (host v1.5).
 3. Frame caps (make the byte budget achievable): ≤ 12 fps everywhere; frame
    count ≤ 36 (`idle`), ≤ 14 (`working`), ≤ 14 (`done`), ≤ 14 (`error`),
    ≤ 48 (`sleeping`). Lossy WebP is fine — sprites tolerate it.
-4. Byte budget: animated ≤ 750 KB per file, static ≤ 150 KB per file.
+4. Byte budget: animated ≤ 750 KB per file, static ≤ 150 KB (`.png`) or ≤ 100 KB (`-static.webp`).
 
 ## 6. Transitions
 
