@@ -8,6 +8,11 @@
 | 🐹 Little Hamster | MiniMax | Pink `#FF7DA0` |
 | 🐰 Moon Rabbit | Kimi (Moonshot) | Gold `#F5C445` |
 | 🐋 Little Whale | DeepSeek | Blue `#4D6BFE` |
+| 🧡 Bunny-Hood Girl | Xiaomi MiMo | Orange `#FF6900` |
+
+All five mascots are fully animated (idle / working / done / error / sleeping,
+WebP, ≤12 fps, tuned to fit tight byte budgets — see the asset
+[contract](docs/pet-contract.md)).
 
 Quota data is consumed entirely from
 [dsh-quota-hub](https://github.com/DarkDarkdDarkWine/dsh-quota-hub)
@@ -20,37 +25,35 @@ Without quota-hub installed, the pet still runs (question-mark state).
 
 **Follows the active model** — only one pet is visible at a time: the one
 matching the model of the current session. Switching models fades the old
-pet out and the new one in (nothing is shown when no provider matches).
+pet out and the new one in. A brand-new conversation shows no pet until the
+first query fixes the model (nothing matches → nothing shown).
 
 | State | Behavior |
 |---|---|
-| Healthy (<70% used) | Gentle floating; click to hop + refresh now |
-| Used ≥70% | Anxious swaying ⚠️ |
-| Used ≥90% | Faints sideways, desaturated 💧, persistent "almost out of quota" bubble |
-| No key / disabled | Ghost mode 💤 |
-| Query failed | Question mark ❓, bubble shows the error |
-| Session running | Glowing highlight + typing animation ⚡ |
+| Idle | Gentle floating; click to hop + refresh now |
+| Session running | Working pose (each pet's own: whale eating, fennec flipping pages, hamster running, rabbit kneading, girl with her plush) + glow ⚡ |
+| Run finished | One-shot celebration (~3s) ✅, then back to idle |
+| Run errored | Drooping pose, badge ❌ |
+| Idle 10 min | Sleeping 💤 (whale curl, girl naps on her rabbit…) |
 
-Hover for a bubble (worst window usage + reset countdown). Right-click menu:
-change avatar / size (64/88/112px) / reset position. Pet position is
-remembered in localStorage. Full state machine and animation-design
-reference in [docs/pet-capabilities.md](docs/pet-capabilities.md) (Chinese).
+Quota pressure is rendered as an overlay (badge + bubble + filter), never as
+art: hover for the worst window usage + reset countdown; ≥70% warn / ≥90%
+critical coloring; no key or disabled provider → ghost mode; query failed →
+question mark ❓ with the error in the bubble.
+
+Right-click menu: temporary avatar preview / size (64/88/112px) / reset
+position / developer state cycler. Position and size are shared across all
+pets and remembered in localStorage. Full state machine and design reference
+in [docs/pet-capabilities.md](docs/pet-capabilities.md) (Chinese).
 
 ## Custom avatars
 
-Two ways:
-
-1. **Recommended**: drop images into the package's `assets/` directory
-   (naming rules in [assets/README.txt](assets/README.txt)). The host serves
-   them same-origin; per-state variants are supported
-   (`kimi.warn.png`, `glm.work.png`, …) and hot-swap within ~30s — no
-   refresh needed.
-2. Right-click the pet → "Change avatar…" to pick a local file
-   (≤1.5MB, stored in the browser).
-
-Without either, a built-in SVG placeholder mascot is shown. Prompt pack for
-generating the four mascots: [docs/image-prompts.md](docs/image-prompts.md)
-(Chinese).
+Assets live in `assets/<petId>/<state>.webp` (animated) plus
+`<state>-static.webp` or `.png` (static fallback for reduced-motion), hot-swapped
+within seconds — naming rules in [assets/README.txt](assets/README.txt),
+validation via `scripts/validate-assets.py`, full spec in the asset
+[contract](docs/pet-contract.md). Prompt pack for generating mascots:
+[docs/image-prompts.md](docs/image-prompts.md) (Chinese).
 
 ## Install
 

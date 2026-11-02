@@ -10,6 +10,10 @@
 | 🐹 小仓鼠 | MiniMax | 粉 `#FF7DA0` |
 | 🐰 月兔 | Kimi（Moonshot） | 金黄 `#F5C445` |
 | 🐋 小鲸鱼 | DeepSeek | 蓝 `#4D6BFE` |
+| 🧡 兔耳帽少女 | 小米 MiMo | 橙 `#FF6900` |
+
+五只全部为全帧动画（idle / working / done / error / sleeping，WebP、≤12fps、
+按字节预算精调——素材规格见[资产合同](docs/pet-contract.md)）。
 
 额度数据完全复用 [dsh-quota-hub](https://github.com/DarkDarkdDarkWine/dsh-quota-hub)
 （`/dsh-quota-hub/status.json`），本插件不碰任何 API Key；没装 quota-hub 时
@@ -18,32 +22,32 @@
 ## 行为
 
 **显示规则：跟随当前模型** —— 同一时刻只显示当前会话正在用的模型那只，
-切模型时旧宠淡出、新宠淡入（未匹配到模型时暂不显示）。
+切模型时旧宠淡出、新宠淡入。全新的空白对话先不显示宠物，发出第一条
+消息、模型确定后才登场（检测不到就不出场）。
 
 | 状态 | 表现 |
 |---|---|
-| 余量充足（<70%） | 轻盈浮动；点击跳一下并立即刷新 |
-| 用量 ≥70% | 焦虑摇摆 ⚠️ |
-| 用量 ≥90% | 躺平变灰 💧，气泡常驻「快没电啦」 |
-| 未配 Key / 停用 | 幽灵半透明 💤 |
-| 查询失败 | 问号 ❓，气泡显示原因 |
-| 会话运行中 | 高亮发光 + 敲键盘态 ⚡ |
+| 待机 | 轻盈浮动；点击跳一下并立即刷新 |
+| 会话运行中 | 各自的干饭/干活姿势（鲸鱼干饭、耳廓狐翻书、仓鼠跑轮、月兔揉面、少女抱兔）+ 金光晕 ⚡ |
+| 一轮完成 | 一次性庆祝动作（约 3 秒）✅ 后回到待机 |
+| 出错 | 垂头姿势 + 角标 ❌ |
+| 挂机 10 分钟 | 睡觉 💤（鲸鱼蜷睡、少女枕兔…） |
 
-悬停出气泡（最紧张窗口 + 重置倒计时）；右键菜单：换形象 / 大小 /
-重置位置。位置记忆在 localStorage。完整状态机与动作设计对照表见
+额度压力只以角标/气泡/滤镜叠加呈现，不做成美术：悬停出气泡（最紧张
+窗口 + 重置倒计时）；≥70% 警告色 / ≥90% 危险色；未配 Key 或停用 → 幽灵
+半透明；查询失败 → 问号 ❓ 气泡显示原因。
+
+右键菜单：临时预览形象 / 大小（64/88/112px）/ 重置位置 / 开发者状态
+循环。位置与大小全宠共享，记忆在 localStorage。完整状态机与设计对照表见
 [docs/pet-capabilities.md](docs/pet-capabilities.md)。
 
 ## 自定义形象
 
-两种方式：
-
-1. **推荐**：出图后扔进本包 `assets/` 目录（命名见
-   [assets/README.txt](assets/README.txt)），宿主端同源伺服，支持按状态
-   提供不同图（`kimi.warn.png`、`glm.work.png` 等），约 30 秒自动生效。
-2. 页面上右键宠物 → 「换形象…」选本地图（≤1.5MB，存浏览器 localStorage）。
-
-两者都没有时显示内置 SVG 占位形象。出图提示词见
-[docs/image-prompts.md](docs/image-prompts.md)。
+素材放在 `assets/<petId>/<state>.webp`（动画）+ `<state>-static.webp` 或
+`.png`（reduced-motion 静态兜底），热加载秒级生效——命名规则见
+[assets/README.txt](assets/README.txt)，校验脚本
+`scripts/validate-assets.py`，完整规格见[资产合同](docs/pet-contract.md)。
+出图提示词见 [docs/image-prompts.md](docs/image-prompts.md)。
 
 ## 安装
 
