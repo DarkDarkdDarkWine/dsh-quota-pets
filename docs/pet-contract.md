@@ -1,8 +1,12 @@
-# Pet Asset Contract v1.5 (frozen for Batch 1)
+# Pet Asset Contract v1.6 (frozen for Batch 1)
 
 Single source of truth shared by the plugin builder and the artist (image
 generation). If either side needs something not covered here, the contract is
 amended first — code is never patched around a gap.
+
+Changelog v1.5 → v1.6: pet id `mimo` (Xiaomi MiMo, orange-black techwear
+bunny-hood girl holding a rabbit plush) joins the roster; matched by the
+`/mimo|xiaomi/i` provider regex. No other terms change.
 
 Changelog v1.4 → v1.5: statics may ship as `<state>-static.webp` (lossy,
 ≤ 100 KB) when the PNG form cannot fit 150 KB. Measured reality: the GLM
@@ -42,6 +46,7 @@ assets/
   glm/          ...   # added after the pilot validates the pipeline
   minimax/      ...
   kimi/         ...
+  mimo/         ...   # Xiaomi MiMo (added in v1.6)
   default/      ...   # mystery pet shown when no provider matches
 ```
 
