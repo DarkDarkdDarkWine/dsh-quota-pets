@@ -4,10 +4,10 @@
 
 | Pet | Provider | Theme color |
 |---|---|---|
-| 🦊 Fennec Scholar | GLM (z.ai / bigmodel) | Purple `#8B7CF6` |
-| 🐹 Little Hamster | MiniMax | Pink `#FF7DA0` |
-| 🐰 Moon Rabbit | Kimi (Moonshot) | Gold `#F5C445` |
-| 🐋 Little Whale | DeepSeek | Blue `#4D6BFE` |
+| 🦊 Broad-Eared Fox Girl | GLM (z.ai / bigmodel) | Purple `#8B7CF6` |
+| 🎙️ Conch Reporter Girl | MiniMax | Pink `#FF7DA0` |
+| 🎵 Star-Moon Flute Girl | Kimi (Moonshot) | Gold `#F5C445` |
+| 🐋 Whale Girl | DeepSeek | Blue `#4D6BFE` |
 | 🧡 Bunny-Hood Girl | Xiaomi MiMo | Orange `#FF6900` |
 
 All five mascots are fully animated (idle / working / done / error / sleeping,
@@ -31,7 +31,7 @@ first query fixes the model (nothing matches → nothing shown).
 | State | Behavior |
 |---|---|
 | Idle | Gentle floating; click to hop + refresh now |
-| Session running | Working pose (each pet's own: whale eating, fennec flipping pages, hamster running, rabbit kneading, girl with her plush) + glow ⚡ |
+| Session running | Working pose (each pet's own: whale girl eating, fox girl flipping pages, reporter girl with her clapperboard, flute girl playing, bunny-hood girl with her plush) + glow ⚡ |
 | Run finished | One-shot celebration (~3s) ✅, then back to idle |
 | Run errored | Drooping pose, badge ❌ |
 | Idle 10 min | Sleeping 💤 (whale curl, girl naps on her rabbit…) |
@@ -52,8 +52,7 @@ Assets live in `assets/<petId>/<state>.webp` (animated) plus
 `<state>-static.webp` or `.png` (static fallback for reduced-motion), hot-swapped
 within seconds — naming rules in [assets/README.txt](assets/README.txt),
 validation via `scripts/validate-assets.py`, full spec in the asset
-[contract](docs/pet-contract.md). Prompt pack for generating mascots:
-[docs/image-prompts.md](docs/image-prompts.md) (Chinese).
+[contract](docs/pet-contract.md).
 
 ## Install
 
@@ -63,6 +62,31 @@ dsh plugin --profile <name> add github:DarkDarkdDarkWine/dsh-quota-pets
 
 Pairs best with
 [dsh-quota-hub](https://github.com/DarkDarkdDarkWine/dsh-quota-hub).
+
+## Design credits
+
+All five mascots are chibi renditions of **community anthropomorphic
+designs** — none of them is an official mascot of the respective company.
+Reference sources recorded during production:
+
+- **DeepSeek whale girl** — based on the [fisharchive.cc](https://fisharchive.cc/)
+  chibi redesign (character redesigns marked CC BY-NC-SA 4.0 on the site).
+- **GLM broad-eared fox girl** — community fox-girl references from
+  aggregator galleries and the
+  [ai-chan-sheets](https://github.com/lmy414/ai-chan-sheets) project
+  (character by ZipZipPipe; repo CC BY-NC-SA).
+- **Kimi star-moon flute girl** — Kimi character by
+  [ZipZipPipe](https://www.bilibili.com/opus/1238267551429951496)
+  (asymmetric outfit per the original post).
+- **MiniMax conch reporter girl** — MiniMax character by
+  [ZipZipPipe](https://www.bilibili.com/opus/1236803362705375305), with
+  auxiliary structure sheets from ai-chan-sheets.
+- **MiMo bunny-hood girl** — MiMo character by 甶丶 ([submission marked CC
+  BY-NC](https://github.com/lmy414/ai-girl-stickers/issues/35); mirrored in
+  [ai-girls](https://github.com/shuaizenge/ai-girls/tree/main/characters/mimo)).
+
+Where a source does not state a license, we record the reference without
+claiming any rights beyond it.
 
 ## License
 
