@@ -81,4 +81,7 @@ dsh plugin --profile <name> add github:DarkDarkdDarkWine/dsh-quota-pets
 
 ## License
 
-MIT
+- **代码**（`lib/`、`scripts/`、`test/`）：[MIT](LICENSE)。
+- **美术素材**（`assets/` 下全部图片）：[CC BY-NC-SA 4.0](assets/LICENSE)
+  ——形象改绘自以「非商业」（部分还有「相同方式共享」）条款发布的社区设计，
+  所以图片**不是** MIT，不可商用。署名清单见 [assets/LICENSE](assets/LICENSE)。

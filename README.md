@@ -90,4 +90,8 @@ claiming any rights beyond it.
 
 ## License
 
-MIT
+- **Code** (`lib/`, `scripts/`, `test/`): [MIT](LICENSE).
+- **Art** (everything under `assets/`): [CC BY-NC-SA 4.0](assets/LICENSE) — the
+  pets are adaptations of community designs released under NonCommercial
+  (and partly ShareAlike) terms, so the images are **not** MIT and may not
+  be used commercially. Credits are in [assets/LICENSE](assets/LICENSE).
