@@ -21,7 +21,8 @@ Checks every file under assets/<petId>/ against the contract.
   difference (0–255) of two 512×512 frames:
     - static ↔ animation: some frame of the state's animation is within
       12 of its static (the static is a key pose of that animation)
-    - done/error static must not be the idle static (diff ≥ 3)
+    - done/error static must differ from the idle and the working static
+      (diff ≥ 3 each)
     - pose continuity: done/error first frame within 20 of working's first
       frame, last frame within 20 of idle's first frame (contract §6)
     - loop seam: diff(last, first) ≤ 1.3 × the mean frame-to-frame step,
@@ -241,16 +242,22 @@ def check_static_match(pet_dir: Path, anims: dict, statics: dict, static_frames:
 
 
 def check_static_distinct(statics: dict, static_frames: dict, report: Report) -> None:
-    idle = static_frames.get("idle")
-    if idle is None:
-        return
+    """done/error statics must read as their own state next to idle and working.
+
+    Reduced-motion users see statics only, so a one-shot static that copies
+    the working pose (the animation's first frame) hides the outcome.
+    """
     for state in ("done", "error"):
         still = static_frames.get(state)
-        if still is not None and (d := diff(still, idle)) < STATIC_DISTINCT_MIN:
-            report.warn(
-                f"{statics[state]}: static is just the idle pose (diff {d:.1f} < {STATIC_DISTINCT_MIN:g} "
-                f"vs idle static) — show the {state} key pose"
-            )
+        if still is None:
+            continue
+        for other in ("idle", "working"):
+            ref = static_frames.get(other)
+            if ref is not None and (d := diff(still, ref)) < STATIC_DISTINCT_MIN:
+                report.warn(
+                    f"{statics[state]}: static is just the {other} pose (diff {d:.1f} < {STATIC_DISTINCT_MIN:g} "
+                    f"vs {other} static) — show the {state} reaction pose (contract §5.2)"
+                )
 
 
 def check_pose_continuity(pet_dir: Path, anims: dict, report: Report) -> None:
