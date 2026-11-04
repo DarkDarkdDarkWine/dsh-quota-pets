@@ -1,4 +1,10 @@
-# Pet Asset Contract v1.7 (frozen for Batch 1)
+# Pet Asset Contract v1.7.1 (frozen for Batch 1)
+
+Changelog v1.7 → v1.7.1 (clarification, no art terms change): §6 now names
+the state flow the plugin actually runs — `done` / `error` play right after
+a `working` run, so their **first** frame must connect to `working`, and
+their **last** frame to `idle`. The validator compared both ends with idle;
+it now checks first ↔ working and last ↔ idle.
 
 Changelog v1.6.3 → v1.7 (terms change, framing): full-bleed framing is
 allowed and is what Batch 1 ships — the character may fill the canvas
@@ -171,6 +177,14 @@ dimming, working glow) may touch every pixel.
 - The first frame of `idle` is the canonical rest pose; every one-shot
   state's **last** frame must be pose-compatible with it (no teleporting
   limbs between state switches).
+- One-shots start right after a run: `working → done` / `working → error`.
+  Their **first** frame must be pose-compatible with `working`'s first
+  frame (the run can end on any working frame, so the working loop's rest
+  frame is the reference). Plugin state flow: `idle → working`,
+  `working → done | error`, `done → idle` (after ~3 s), `error → working`
+  (next run), `idle ↔ sleeping`, `sleeping → working`. There are no
+  in-between transition clips yet; until there are, each pair above must
+  connect directly.
 - `sleeping` should end its loop in a pose a short `wake` one-shot
   (Batch 2) can start from.
 - Frame timing inside a state is the artist's; code controls only display
@@ -210,7 +224,7 @@ Per pet (cross-file). `diff` = mean absolute RGBA difference (0–255) of two
 |---|---|---|
 | static ↔ animation | some frame of the state's animation within 12 of its static — the static is a key pose of that animation (§5.2) | warning |
 | distinct one-shot statics | `done` / `error` static differs from the idle static by ≥ 3 | warning |
-| pose continuity | `done` / `error` first and last frames within 20 of idle's first frame (§6) | warning |
+| pose continuity | `done` / `error`: first frame within 20 of working's first frame, last frame within 20 of idle's first frame (§6) | warning |
 | loop seam | `idle` / `working` / `sleeping`: diff(last, first) ≤ 1.3 × the mean frame-to-frame step | warning |
 | centering | horizontal centre of each state's first frame (alpha > 16 bbox) within 16 px across the pet's states | warning |
 

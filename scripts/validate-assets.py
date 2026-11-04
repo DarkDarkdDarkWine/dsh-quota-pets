@@ -22,8 +22,8 @@ Checks every file under assets/<petId>/ against the contract.
     - static ↔ animation: some frame of the state's animation is within
       12 of its static (the static is a key pose of that animation)
     - done/error static must not be the idle static (diff ≥ 3)
-    - pose continuity: one-shot first and last frames within 20 of the
-      idle first frame (contract §6)
+    - pose continuity: done/error first frame within 20 of working's first
+      frame, last frame within 20 of idle's first frame (contract §6)
     - loop seam: diff(last, first) ≤ 1.3 × the mean frame-to-frame step
     - centering: horizontal centre of every state's first frame within
       16 px across the pet's states
@@ -248,18 +248,21 @@ def check_static_distinct(statics: dict, static_frames: dict, report: Report) ->
 
 
 def check_pose_continuity(pet_dir: Path, anims: dict, report: Report) -> None:
-    idle = anims.get("idle")
-    if not idle:
-        return
+    """done/error play right after a working run and hand back to idle."""
+    idle, working = anims.get("idle"), anims.get("working")
     for state in ("done", "error"):
         frames = anims.get(state)
         if not frames:
             continue
-        first, last = diff(frames[0], idle[0]), diff(frames[-1], idle[0])
-        if max(first, last) > POSE_CONTINUITY_MAX:
+        gaps = []
+        if working and (first := diff(frames[0], working[0])) > POSE_CONTINUITY_MAX:
+            gaps.append(f"first frame is {first:.1f} from working's first frame")
+        if idle and (last := diff(frames[-1], idle[0])) > POSE_CONTINUITY_MAX:
+            gaps.append(f"last frame is {last:.1f} from idle's first frame")
+        if gaps:
             report.warn(
-                f"{pet_dir / (state + '.webp')}: first={first:.1f} last={last:.1f} vs idle first frame "
-                f"(> {POSE_CONTINUITY_MAX:g}) — one-shots must start and end pose-compatible with idle (contract §6)"
+                f"{pet_dir / (state + '.webp')}: {'; '.join(gaps)} (> {POSE_CONTINUITY_MAX:g}) — "
+                f"one-shots follow a working run and hand back to idle (contract §6)"
             )
 
 

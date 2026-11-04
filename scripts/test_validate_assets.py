@@ -29,18 +29,23 @@ CANVAS = 512
 STATES = ("idle", "working", "done", "error", "sleeping")
 ONE_SHOTS = ("done", "error")
 
-# A frame is described by (body x offset, accent colour or None).
-FrameSpec = tuple[int, tuple[int, int, int] | None]
+# A frame is described by (body x offset, accent colour or None[, seated]).
+FrameSpec = tuple
 
 
-def draw(dx: int = 0, accent: tuple[int, int, int] | None = None) -> Image.Image:
-    """Opaque body centred on the canvas, feet near the bottom, badge corner empty."""
+def draw(dx: int = 0, accent: tuple[int, int, int] | None = None, seated: bool = False) -> Image.Image:
+    """Opaque body centred on the canvas, feet near the bottom, badge corner empty.
+
+    `seated` swaps the tall standing body for a short wide one with the same
+    centre line — a pose change big enough to break continuity.
+    """
     im = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    d.rectangle((156 + dx, 120, 356 + dx, 480), fill=(90, 120, 200, 255))
+    left, top, right = (106, 300, 406) if seated else (156, 120, 356)
+    d.rectangle((left + dx, top, right + dx, 480), fill=(90, 120, 200, 255))
     # soft edge: libwebp crops frames to their visible area, and a fully
     # opaque crop would be written without an alpha channel at all
-    d.rectangle((154 + dx, 118, 358 + dx, 482), outline=(90, 120, 200, 128), width=2)
+    d.rectangle((left - 2 + dx, top - 2, right + 2 + dx, 482), outline=(90, 120, 200, 128), width=2)
     if accent is not None:
         d.rectangle((206 + dx, 200, 306 + dx, 300), fill=(*accent, 255))
     return im
@@ -78,7 +83,7 @@ def write_pet(
     folder = root / pet
     folder.mkdir(parents=True)
     for state in STATES:
-        frames = [draw(dx, accent) for dx, accent in anims[state]]
+        frames = [draw(*spec) for spec in anims[state]]
         loop = loops.get(state, 1 if state in ONE_SHOTS else 0)
         frames[0].save(
             folder / f"{state}.webp",
@@ -135,15 +140,42 @@ class StaticIsIdleTest(unittest.TestCase):
         self.assertTrue(any("done.png" in w and "idle" in w for w in report.warnings), joined(report))
 
 
-class PoseContinuityTest(unittest.TestCase):
-    def test_one_shot_starting_far_from_idle_warns(self) -> None:
-        far = [(150, GOLD), (152, GOLD), (150, GOLD)]  # distinct: libwebp merges identical frames
-        report = run(lambda r: write_pet(r, anims={"done": far}, statics={"done": (150, GOLD)}))
-        self.assertTrue(any("done.webp" in w and "idle" in w for w in report.warnings), joined(report))
+SEATED_WORKING = [(0, None, True), (3, None, True), (6, None, True), (3, None, True)]
 
-    def test_one_shot_near_idle_is_fine(self) -> None:
-        report = run(write_pet)
-        self.assertFalse(any("first=" in w for w in report.warnings), joined(report))
+
+def pose_warnings(report: "va.Report", state: str = "done") -> list[str]:
+    return [w for w in report.warnings if f"{state}.webp" in w and "contract §6" in w]
+
+
+class PoseContinuityTest(unittest.TestCase):
+    """One-shots follow a working run and hand back to idle (contract §6)."""
+
+    def test_baseline_one_shots_connect(self) -> None:
+        self.assertEqual(pose_warnings(run(write_pet)), [])
+
+    def test_one_shot_that_never_returns_to_idle_warns_on_last_frame(self) -> None:
+        stays_seated = [(0, GOLD, True), (2, GOLD, True), (0, GOLD, True)]
+        report = run(lambda r: write_pet(r, anims={"working": SEATED_WORKING, "done": stays_seated},
+                                         statics={"working": (3, None, True), "done": (0, GOLD, True)}))
+        warnings = pose_warnings(report)
+        self.assertEqual(len(warnings), 1, joined(report))
+        self.assertIn("last frame is", warnings[0])
+        self.assertNotIn("first frame is", warnings[0])
+
+    def test_one_shot_that_ignores_the_working_pose_warns_on_first_frame(self) -> None:
+        report = run(lambda r: write_pet(r, anims={"working": SEATED_WORKING},
+                                         statics={"working": (3, None, True)}))
+        warnings = pose_warnings(report)
+        self.assertEqual(len(warnings), 1, joined(report))
+        self.assertIn("first frame is", warnings[0])
+        self.assertNotIn("last frame is", warnings[0])
+
+    def test_one_shot_from_seated_working_back_to_standing_idle_is_fine(self) -> None:
+        stand_up = [(0, GOLD, True), (0, GOLD), (2, GOLD), (0, GOLD)]
+        report = run(lambda r: write_pet(r, anims={"working": SEATED_WORKING, "done": stand_up,
+                                                   "error": [(0, RED, True), (0, RED), (-2, RED), (0, RED)]},
+                                         statics={"working": (3, None, True)}))
+        self.assertEqual(pose_warnings(report) + pose_warnings(report, "error"), [], joined(report))
 
 
 class LoopSeamTest(unittest.TestCase):
