@@ -1,4 +1,9 @@
-# Pet Asset Contract v1.7.1 (frozen for Batch 1)
+# Pet Asset Contract v1.7.2 (frozen for Batch 1)
+
+Changelog v1.7.1 → v1.7.2 (enforcement only): `diff` now compares
+premultiplied RGBA, so colour left under fully transparent pixels (invisible,
+zeroed by some encoders) no longer counts; and a looping animation whose last
+frame repeats its first is flagged (the pose shows twice and the loop stalls).
 
 Changelog v1.7 → v1.7.1 (clarification, no art terms change): §6 now names
 the state flow the plugin actually runs — `done` / `error` play right after
@@ -217,15 +222,15 @@ Per file:
 | feet baseline: lowest opaque row in the bottom 20 % (§3) | warning |
 | no cut-off edges: no pixel with alpha > 128 on the outermost 1 px border, any frame (§3) | warning |
 
-Per pet (cross-file). `diff` = mean absolute RGBA difference (0–255) of two
-512 × 512 frames:
+Per pet (cross-file). `diff` = mean absolute difference (0–255) of two
+512 × 512 frames in premultiplied RGBA (invisible pixels count as equal):
 
 | Check | Rule | Level |
 |---|---|---|
 | static ↔ animation | some frame of the state's animation within 12 of its static — the static is a key pose of that animation (§5.2) | warning |
 | distinct one-shot statics | `done` / `error` static differs from the idle static by ≥ 3 | warning |
 | pose continuity | `done` / `error`: first frame within 20 of working's first frame, last frame within 20 of idle's first frame (§6) | warning |
-| loop seam | `idle` / `working` / `sleeping`: diff(last, first) ≤ 1.3 × the mean frame-to-frame step | warning |
+| loop seam | `idle` / `working` / `sleeping`: diff(last, first) ≤ 1.3 × the mean frame-to-frame step, and the last frame must not repeat the first (diff < 0.05) | warning |
 | centering | horizontal centre of each state's first frame (alpha > 16 bbox) within 16 px across the pet's states | warning |
 
 Thresholds were calibrated on the Batch 1 art: clean files sit well inside

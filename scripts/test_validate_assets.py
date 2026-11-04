@@ -185,11 +185,32 @@ class LoopSeamTest(unittest.TestCase):
         self.assertTrue(any("working.webp" in w and "seam" in w for w in report.warnings), joined(report))
 
 
+class RepeatedEndpointTest(unittest.TestCase):
+    def test_loop_whose_last_frame_repeats_the_first_warns(self) -> None:
+        repeat = [(0, None), (2, None), (4, None), (2, None), (0, None)]
+        report = run(lambda r: write_pet(r, anims={"idle": repeat}))
+        self.assertTrue(any("idle.webp" in w and "repeats the first" in w for w in report.warnings), joined(report))
+
+    def test_seamless_ping_pong_is_fine(self) -> None:
+        self.assertFalse(any("repeats the first" in w for w in run(write_pet).warnings))
+
+
 class CenteringTest(unittest.TestCase):
     def test_state_shifted_sideways_warns(self) -> None:
         shifted = [(40, None), (41, None), (42, None), (41, None)]
         report = run(lambda r: write_pet(r, anims={"sleeping": shifted}, statics={"sleeping": (41, None)}))
         self.assertTrue(any("center" in w and "sleeping" in w for w in report.warnings), joined(report))
+
+
+class DiffMetricTest(unittest.TestCase):
+    def test_colour_hidden_under_zero_alpha_is_ignored(self) -> None:
+        clean = draw()
+        dirty = clean.copy()
+        ImageDraw.Draw(dirty).rectangle((0, 0, 100, 100), fill=(255, 0, 255, 0))  # invisible leftovers
+        self.assertEqual(va.diff(clean, dirty), 0)
+
+    def test_visible_change_still_counts(self) -> None:
+        self.assertGreater(va.diff(draw(), draw(accent=GOLD)), 1)
 
 
 class EdgeContactTest(unittest.TestCase):
