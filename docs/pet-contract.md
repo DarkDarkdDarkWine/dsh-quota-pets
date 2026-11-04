@@ -1,4 +1,9 @@
-# Pet Asset Contract v1.6.1 (frozen for Batch 1)
+# Pet Asset Contract v1.6.2 (frozen for Batch 1)
+
+Changelog v1.6.1 → v1.6.2: one-shot WebP files (`done`, `error`) must use
+loop count `1` (play once, then hold the last frame). Looping states keep
+loop count `0`. This lossless metadata correction changes no frame images
+or frame timings.
 
 Single source of truth shared by the plugin builder and the artist (image
 generation). If either side needs something not covered here, the contract is
@@ -83,6 +88,11 @@ hyphens anywhere, except the one reserved suffix `-static`
 | `done` | one-shot | run ended cleanly (session-stable, run ≥ 4 s) | ≤ 1.2 s, hold last frame | ~3 s, then back to idle |
 | `error` | one-shot, hold | run ended with an error | ≤ 1.2 s, hold last frame | until the next run starts |
 | `sleeping` | loop | idle timeout ≈ 10 min (no run, no interaction) | seamless, 3–4 s | until woken |
+
+**WebP loop counts:** one-shot files (`done.webp`, `error.webp`) must have
+loop count `1`, so they play once and hold the last frame. Looping files
+(`idle.webp`, `working.webp`, `sleeping.webp`) must have loop count `0`
+(infinite). Replaying a one-shot is controlled by remounting it (§6).
 
 **Held poses:** the last frames of `done` and especially `error` may be
 held on screen for minutes — they must read clearly as a pose, not a
