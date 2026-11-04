@@ -4,6 +4,9 @@
   "description": "DeepSeek Harness client plugin: chibi pets for your LLM coding plans (GLM / MiniMax / Kimi / DeepSeek) — mood follows quota usage from dsh-quota-hub, the active session's model gets highlighted.",
   "type": "module",
   "main": "./lib/index.js",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
   "files": [
     "lib",
     "assets",
