@@ -16,6 +16,8 @@
 <state> 动画 → <state> 静态 → idle 静态 → idle 动画 → 内置 SVG 占位。
 
 放好文件后刷新页面即生效（宿主 3 秒重扫）。
-写完素材跑 `python3 scripts/validate-assets.py` 校验尺寸/透明角/字节预算。
+写完素材跑 `python3 scripts/validate-assets.py` 校验：尺寸、透明角、字节预算、
+循环次数，以及静态图与动画是否对得上、一次性动作能否接回待机、循环接缝、
+各状态水平位置（规则见 docs/pet-contract.md §8）。加 --strict 时警告也算失败。
 
 授权：本目录图片为 CC BY-NC-SA 4.0（不可商用），署名见 LICENSE。
