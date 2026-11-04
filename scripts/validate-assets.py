@@ -15,6 +15,8 @@ Checks every file under assets/<petId>/ against the contract.
     - ≤ 12 fps; frame caps (idle 36 / working 14 / done 14 / error 14 /
       sleeping 48)
     - feet baseline: lowest opaque row in the bottom 20%
+    - no cut-off edges: no pixel with alpha > 128 on the outermost 1 px
+      border in any frame (full-bleed framing is allowed, contract §3)
   per-pet, soft rules (warnings) — `diff` is the mean absolute RGBA
   difference (0–255) of two 512×512 frames:
     - static ↔ animation: some frame of the state's animation is within
@@ -66,6 +68,7 @@ POSE_CONTINUITY_MAX = 20.0
 SEAM_RATIO_MAX = 1.3
 CENTER_SPREAD_MAX = 16
 BBOX_ALPHA = 16
+EDGE_ALPHA_MAX = 128  # contract §3: solid art must not touch the canvas border
 
 
 @dataclass
@@ -110,6 +113,14 @@ def center_x(frame: Image.Image) -> float | None:
     return None if box is None else (box[0] + box[2]) / 2
 
 
+def edge_sides(frame: Image.Image) -> list[str]:
+    """Canvas sides whose outermost 1 px row/column holds solid pixels."""
+    alpha = frame.getchannel("A")
+    w, h = alpha.size
+    strips = {"top": (0, 0, w, 1), "bottom": (0, h - 1, w, h), "left": (0, 0, 1, h), "right": (w - 1, 0, w, h)}
+    return [side for side, box in strips.items() if alpha.crop(box).getextrema()[1] > EDGE_ALPHA_MAX]
+
+
 def split_name(path: Path) -> tuple[str, bool]:
     """(state, forced_static) for `<state>.<ext>` / `<state>-static.<ext>`."""
     stem = path.stem.lower()
@@ -151,6 +162,13 @@ def check_file(path: Path, report: Report) -> None:
         corner = frame.crop((cx0, 0, cx0 + int(CANVAS * CORNER_RATIO), int(CANVAS * CORNER_RATIO)))
         if corner.getchannel("A").getextrema()[1] > 8:
             report.err(f"{rel}: frame {i} badge corner (top-right {int(CORNER_RATIO*100)}%) is not fully transparent")
+    touching = [i for i, frame in enumerate(frames) if edge_sides(frame)]
+    if touching:
+        sides = "/".join(edge_sides(frames[touching[0]]))
+        report.warn(
+            f"{rel}: solid art touches the canvas edge ({sides}) in {len(touching)} frame(s), first at frame "
+            f"{touching[0]} — it will look cut off; keep alpha ≤ {EDGE_ALPHA_MAX} on the outer 1 px (contract §3)"
+        )
     if animated and len(frames) > 1:
         check_animation(rel, state, img, len(frames), report)
     check_baseline(rel, frames[0], report)
@@ -177,7 +195,7 @@ def check_baseline(rel: str, first: Image.Image, report: Report) -> None:
     """Feet baseline (soft): lowest opaque row should sit in the bottom 20%."""
     box = first.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox()
     if box is not None and box[3] - 1 < int(CANVAS * 0.80):
-        report.warn(f"{rel}: lowest opaque row at y={box[3] - 1} — feet baseline looks high (contract wants ~92%)")
+        report.warn(f"{rel}: lowest opaque row at y={box[3] - 1} — feet baseline looks high (feet should sit near the bottom, contract §3)")
 
 
 # ---------------------------------------------------------------------------
