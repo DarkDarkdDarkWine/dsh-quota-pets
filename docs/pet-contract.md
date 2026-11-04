@@ -1,4 +1,11 @@
-# Pet Asset Contract v1.7.2 (frozen for Batch 1)
+# Pet Asset Contract v1.7.3 (frozen for Batch 1)
+
+Changelog v1.7.2 → v1.7.3 (enforcement only): a `done` / `error` static
+must also differ from the **working** static (diff ≥ 3), not only from
+idle. Reduced-motion users see statics only, and a one-shot's first frame
+copies the working pose (§6), so picking "the frame furthest from idle"
+could land on a static that looks like work is still running. The static
+is the reaction peak: the frame best separated from both idle and working.
 
 Changelog v1.7.1 → v1.7.2 (enforcement only): `diff` now compares
 premultiplied RGBA, so colour left under fully transparent pixels (invisible,
@@ -171,7 +178,7 @@ dimming, working glow) may touch every pixel.
    generated only after the pilot renders correctly in the plugin. Style
    consistency across pets comes from the shared style guide, not from
    generating them simultaneously.
-2. Per state: `<state>.webp` (animated) **and** a static fallback (= representative key pose of the state, not frame 1 — e.g. `working`'s static shows mid-keystroke, so reduced-motion mode never looks idle). Static form is either `<state>.png` (≤ 150 KB) or, when the PNG is entropy-limited above that budget (detail-rich art), `<state>-static.webp` (lossy, ≤ 100 KB). The `-static` suffix always lands in the static slot regardless of extension (host v1.5).
+2. Per state: `<state>.webp` (animated) **and** a static fallback (= representative key pose of the state, not frame 1 — e.g. `working`'s static shows mid-keystroke, so reduced-motion mode never looks idle; `done` / `error` show the reaction peak — the frame best separated from both the idle and the working statics, never the first frame that still copies working). Static form is either `<state>.png` (≤ 150 KB) or, when the PNG is entropy-limited above that budget (detail-rich art), `<state>-static.webp` (lossy, ≤ 100 KB). The `-static` suffix always lands in the static slot regardless of extension (host v1.5).
 3. Frame caps (make the byte budget achievable): ≤ 12 fps everywhere; frame
    count ≤ 36 (`idle`), ≤ 14 (`working`), ≤ 14 (`done`), ≤ 14 (`error`),
    ≤ 48 (`sleeping`). Lossy WebP is fine — sprites tolerate it.
@@ -228,7 +235,7 @@ Per pet (cross-file). `diff` = mean absolute difference (0–255) of two
 | Check | Rule | Level |
 |---|---|---|
 | static ↔ animation | some frame of the state's animation within 12 of its static — the static is a key pose of that animation (§5.2) | warning |
-| distinct one-shot statics | `done` / `error` static differs from the idle static by ≥ 3 | warning |
+| distinct one-shot statics | `done` / `error` static differs from the idle static **and** the working static by ≥ 3 each | warning |
 | pose continuity | `done` / `error`: first frame within 20 of working's first frame, last frame within 20 of idle's first frame (§6) | warning |
 | loop seam | `idle` / `working` / `sleeping`: diff(last, first) ≤ 1.3 × the mean frame-to-frame step, and the last frame must not repeat the first (diff < 0.05) | warning |
 | centering | horizontal centre of each state's first frame (alpha > 16 bbox) within 16 px across the pet's states | warning |

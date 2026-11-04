@@ -140,6 +140,20 @@ class StaticIsIdleTest(unittest.TestCase):
         self.assertTrue(any("done.png" in w and "idle" in w for w in report.warnings), joined(report))
 
 
+class StaticIsWorkingTest(unittest.TestCase):
+    """Reduced-motion users see only statics: done/error must not look like working."""
+
+    def test_one_shot_static_identical_to_working_static_warns(self) -> None:
+        anims = {"error": [(3, None), (0, RED), (-2, RED), (0, RED)]}
+        report = run(lambda r: write_pet(r, anims=anims, statics={"error": (3, None)}))
+        self.assertTrue(any("error.png" in w and "working pose" in w for w in report.warnings), joined(report))
+
+    def test_one_shot_static_on_its_reaction_pose_is_fine(self) -> None:
+        anims = {"error": [(3, None), (0, RED), (-2, RED), (0, RED)]}
+        report = run(lambda r: write_pet(r, anims=anims, statics={"error": (-2, RED)}))
+        self.assertFalse(any("working pose" in w for w in report.warnings), joined(report))
+
+
 SEATED_WORKING = [(0, None, True), (3, None, True), (6, None, True), (3, None, True)]
 
 
