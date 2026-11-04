@@ -24,7 +24,8 @@ Checks every file under assets/<petId>/ against the contract.
     - done/error static must not be the idle static (diff ≥ 3)
     - pose continuity: done/error first frame within 20 of working's first
       frame, last frame within 20 of idle's first frame (contract §6)
-    - loop seam: diff(last, first) ≤ 1.3 × the mean frame-to-frame step
+    - loop seam: diff(last, first) ≤ 1.3 × the mean frame-to-frame step,
+      and the last frame must not repeat the first (that stalls the loop)
     - centering: horizontal centre of every state's first frame within
       16 px across the pet's states
 
@@ -66,6 +67,7 @@ STATIC_MATCH_MAX = 12.0
 STATIC_DISTINCT_MIN = 3.0
 POSE_CONTINUITY_MAX = 20.0
 SEAM_RATIO_MAX = 1.3
+REPEAT_MAX = 0.05  # last ≈ first: the loop shows one pose twice
 CENTER_SPREAD_MAX = 16
 BBOX_ALPHA = 16
 EDGE_ALPHA_MAX = 128  # contract §3: solid art must not touch the canvas border
@@ -104,8 +106,12 @@ def canvas_frames(path: Path) -> list[Image.Image]:
 
 
 def diff(a: Image.Image, b: Image.Image) -> float:
-    """Mean absolute RGBA difference, 0–255."""
-    return sum(ImageStat.Stat(ImageChops.difference(a, b)).mean) / 4
+    """Mean absolute difference of premultiplied RGBA, 0–255.
+
+    Premultiplied, so colour left under fully transparent pixels — invisible,
+    and zeroed by some encoders but not others — never counts.
+    """
+    return sum(ImageStat.Stat(ImageChops.difference(a.convert("RGBa"), b.convert("RGBa"))).mean) / 4
 
 
 def center_x(frame: Image.Image) -> float | None:
@@ -276,7 +282,12 @@ def check_loop_seams(pet_dir: Path, anims: dict, report: Report) -> None:
         if mean <= 0:
             continue
         seam = diff(frames[-1], frames[0])
-        if seam / mean > SEAM_RATIO_MAX:
+        if seam < REPEAT_MAX:
+            report.warn(
+                f"{pet_dir / (state + '.webp')}: last frame repeats the first frame (diff {seam:.2f}) — the loop "
+                f"shows that pose twice in a row and stalls; drop the last frame"
+            )
+        elif seam / mean > SEAM_RATIO_MAX:
             report.warn(
                 f"{pet_dir / (state + '.webp')}: loop seam {seam:.1f} is {seam / mean:.2f}× the mean frame step "
                 f"{mean:.1f} (> {SEAM_RATIO_MAX:g}×) — the last frame should flow into the first"
