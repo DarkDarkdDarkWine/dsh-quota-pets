@@ -1,4 +1,13 @@
-# Pet Asset Contract v1.6.3 (frozen for Batch 1)
+# Pet Asset Contract v1.7 (frozen for Batch 1)
+
+Changelog v1.6.3 → v1.7 (terms change, framing): full-bleed framing is
+allowed and is what Batch 1 ships — the character may fill the canvas
+(Batch 1 rest poses span ~98 % of its height, feet at ~99 %). The old
+"feet at ~92 %, height ≤ 85 %, 7 % margin" rule is dropped: at 64–112 px
+display sizes a larger figure reads better. What stays: the badge corner
+(§4), horizontal centering consistent across a pet's states, and a new
+rule that solid art must not touch the canvas edge (no cut-off look).
+Canvas size is unchanged (512 px).
 
 Changelog v1.6.2 → v1.6.3 (enforcement only, no terms change): the
 validator gains cross-file checks for loop counts, static ↔ animation
@@ -122,12 +131,21 @@ them.
   shipped — the pet displays at 64 / 88 / 112 px width, scaled
   proportionally, so 512 is ≥ 4× the largest display size.
 - Rest poses (first frame of `idle`, last frames of one-shots): full body,
-  standing, facing viewer, **horizontally centered**; feet baseline at ~92%
-  of canvas height. Mid-animation frames may leave the baseline (hops,
-  stretches) — that is expected.
-- Character height ≤ 85% of canvas in rest poses; outer 7% margin on every
-  side free of critical detail. **Tall silhouettes beware:** rabbit ears or
-  owl tufts must not intrude into the top-right badge corner.
+  facing viewer, **horizontally centered**, and at the same horizontal
+  position in every state of the pet (switching states must not slide the
+  figure sideways; §8 checks a ≤ 16 px spread). Feet sit on a common
+  baseline near the bottom of the canvas. Mid-animation frames may leave
+  the baseline (hops, stretches) — that is expected.
+- **Full-bleed framing is allowed:** the character may fill the canvas
+  edge to edge — no fixed margin or height cap. Batch 1 rest poses span
+  ~98 % of the canvas height with feet at ~99 %; new pets should match
+  that scale so pets look the same size on stage.
+- **No cut-off edges:** solid art must not touch the canvas border — the
+  outermost 1 px row/column on each side carries no pixel with alpha > 128
+  in any frame. Soft anti-aliasing may reach it. Anything that would cross
+  the edge is scaled or posed to stay inside.
+- **Tall silhouettes beware:** rabbit ears or owl tufts must not intrude
+  into the top-right badge corner (§4).
 
 ## 4. Reserved overlay area
 
@@ -182,7 +200,8 @@ Per file:
 | byte budget (§5) | error |
 | loop count: `done` / `error` = 1, `idle` / `working` / `sleeping` = 0 (§2) | error |
 | ≤ 12 fps, per-state frame caps (§5) | warning |
-| feet baseline: lowest opaque row in the bottom 20 % | warning |
+| feet baseline: lowest opaque row in the bottom 20 % (§3) | warning |
+| no cut-off edges: no pixel with alpha > 128 on the outermost 1 px border, any frame (§3) | warning |
 
 Per pet (cross-file). `diff` = mean absolute RGBA difference (0–255) of two
 512 × 512 frames:

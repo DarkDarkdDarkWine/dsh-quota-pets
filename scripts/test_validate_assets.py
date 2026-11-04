@@ -160,6 +160,30 @@ class CenteringTest(unittest.TestCase):
         self.assertTrue(any("center" in w and "sleeping" in w for w in report.warnings), joined(report))
 
 
+class EdgeContactTest(unittest.TestCase):
+    def test_solid_art_touching_the_canvas_edge_warns(self) -> None:
+        def build(r: Path) -> Path:
+            write_pet(r)
+            still = draw()
+            ImageDraw.Draw(still).rectangle((100, 400, 160, CANVAS - 1), fill=(90, 120, 200, 255))
+            still.save(r / "glm" / "idle.png")  # foot cut off by the bottom edge
+            return r
+
+        report = run(build)
+        self.assertTrue(any("idle.png" in w and "edge" in w for w in report.warnings), joined(report))
+
+    def test_soft_edge_reaching_the_border_is_fine(self) -> None:
+        def build(r: Path) -> Path:
+            write_pet(r)
+            still = draw()
+            ImageDraw.Draw(still).line((0, 300, 0, 320), fill=(90, 120, 200, 100))
+            still.save(r / "glm" / "idle.png")
+            return r
+
+        report = run(build)
+        self.assertFalse(any("edge" in w for w in report.warnings), joined(report))
+
+
 class StrictModeTest(unittest.TestCase):
     def exit_code(self, build: Callable[[Path], Path], *flags: str) -> int:
         with tempfile.TemporaryDirectory() as tmp, redirect_stdout(io.StringIO()):
