@@ -1,0 +1,46 @@
+dsh-quota-pets — art assets license
+====================================
+
+Scope: every image under this assets/ directory (all pet folders and
+icon-180.png). The plugin source code (lib/, scripts/, test/) is MIT —
+see ../LICENSE.
+
+These images are chibi re-drawings (adaptations) of community fan designs.
+Several of those designs are published under Creative Commons
+NonCommercial licenses, some of them ShareAlike, so the adapted art can
+NOT be offered under MIT. It is licensed under:
+
+  Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+  (CC BY-NC-SA 4.0)
+  https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+In short: you may share and adapt these images for NON-COMMERCIAL purposes,
+must credit the original character authors listed below, and must license
+any adaptation under the same terms. Read the license text at the link
+above for the binding terms.
+
+Attribution (original character designs)
+----------------------------------------
+
+  Pet folder     Character            Original design / source              License noted by source
+  -------------  -------------------  ------------------------------------  -----------------------
+  deepseek/      DeepSeek whale girl  fisharchive.cc (chibi character sheet) CC BY-NC-SA 4.0
+  icon-180.png   (same as deepseek)   fisharchive.cc                        CC BY-NC-SA 4.0
+  glm/           GLM fennec girl      ZipZipPipe, via ai-chan-sheets         CC BY-NC-SA
+                                      (github.com/lmy414/ai-chan-sheets)
+  kimi/          Kimi moon girl       ZipZipPipe                             not stated
+                                      (bilibili.com/opus/1238267551429951496)
+  minimax/       MiniMax conch        ZipZipPipe                             not stated
+                 reporter girl        (bilibili.com/opus/1236803362705375305);
+                                      structure refs from ai-chan-sheets
+  mimo/          MiMo bunny-hood      甶丶 (github.com/lmy414/ai-girl-stickers/issues/35)  CC BY-NC
+                 girl
+
+Where the source states no license, the original author keeps all rights
+in the character design; this notice claims nothing beyond what that
+source grants, and the CC BY-NC-SA terms above apply only to the extent
+this project is able to grant them.
+
+None of these characters are official mascots of DeepSeek, Zhipu / Z.ai,
+Moonshot AI, MiniMax or Xiaomi, and the companies do not endorse this
+project. Product names are used only to say which model each pet follows.

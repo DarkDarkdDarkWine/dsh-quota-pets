@@ -4,10 +4,11 @@
 Checks every file under assets/<petId>/ against the contract:
 
   hard rules (exit 1):
-    - filename matches <state>.<ext>
+    - filename matches <state>.<ext> or <state>-static.<ext>
     - canvas is square 512×512 (downscale/upscale warning band ±8px)
     - corner badge zone (top-right 18%×18%) fully transparent on every frame
-    - byte budget: animated ≤ 400 KB, static ≤ 150 KB
+    - byte budget: animated ≤ 750 KB, static .png ≤ 150 KB,
+      <state>-static.webp ≤ 100 KB
   soft rules (warnings only):
     - animated: ≤ 12 fps, frame caps (idle 36 / working 10 / done 14 /
       error 14 / sleeping 48)

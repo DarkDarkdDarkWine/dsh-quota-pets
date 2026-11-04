@@ -1,8 +1,13 @@
-# Pet Asset Contract v1.6 (frozen for Batch 1)
+# Pet Asset Contract v1.6.1 (frozen for Batch 1)
 
 Single source of truth shared by the plugin builder and the artist (image
 generation). If either side needs something not covered here, the contract is
 amended first — code is never patched around a gap.
+
+Changelog v1.6 → v1.6.1 (wording only, no terms change): the hyphen rule
+now names the one allowed suffix `-static`; §7 states the fallback chain
+the code actually runs; `default/` is documented as preview-only (the
+plugin hides the pet when no provider matches).
 
 Changelog v1.5 → v1.6: pet id `mimo` (Xiaomi MiMo, orange-black techwear
 bunny-hood girl holding a rabbit plush) joins the roster; matched by the
@@ -47,7 +52,8 @@ assets/
   minimax/      ...
   kimi/         ...
   mimo/         ...   # Xiaomi MiMo (added in v1.6)
-  default/      ...   # mystery pet shown when no provider matches
+  default/      ...   # optional: body for the developer state preview only
+                      #   (no provider match → the pet is hidden, not replaced)
 ```
 
 - Animated file: `<state>.webp`. Static fallback: `<state>.png`. The loader
@@ -65,7 +71,8 @@ conversion owned by the builder, not a contract change. Never ship a raw
 atlas.
 
 The old flat dot-style naming (`glm.warn.png`) is **deprecated**. No
-hyphens anywhere.
+hyphens anywhere, except the one reserved suffix `-static`
+(`<state>-static.webp`, v1.5).
 
 ## 2. States (Batch 1)
 
@@ -139,9 +146,11 @@ dimming, working glow) may touch every pixel.
 
 ## 7. Fallback chain (code behavior, for reference)
 
-`<state>.webp → <state>.png → idle.webp → idle.png → built-in SVG
-placeholder`. Reduced-motion mode goes straight to `<state>.png`. A missing
-file degrades gracefully, never to broken UI.
+`<state>` animated → `<state>` static → `idle` static → `idle` animated →
+built-in SVG placeholder. "Static" is `<state>-static.webp` or
+`<state>.png`, whichever is present. Reduced-motion mode skips animated
+files: `<state>` static → `idle` static → SVG. A missing file degrades
+gracefully, never to broken UI.
 
 ## 8. Enforcement
 
