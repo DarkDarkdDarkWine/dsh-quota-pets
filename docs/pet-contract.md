@@ -1,4 +1,8 @@
-# Pet Asset Contract v1.6.2 (frozen for Batch 1)
+# Pet Asset Contract v1.6.3 (frozen for Batch 1)
+
+Changelog v1.6.2 → v1.6.3 (enforcement only, no terms change): the
+validator gains cross-file checks for loop counts, static ↔ animation
+match, pose continuity, loop seams and horizontal centering (§8).
 
 Changelog v1.6.1 → v1.6.2: one-shot WebP files (`done`, `error`) must use
 loop count `1` (play once, then hold the last frame). Looping states keep
@@ -165,7 +169,35 @@ gracefully, never to broken UI.
 ## 8. Enforcement
 
 `scripts/validate-assets.py` checks every delivered file against this
-contract: dimensions, alpha background, byte budgets, badge-corner
-transparency, foot baseline of rest poses, and first/last-frame
-pose-similarity (idle vs one-shot endings). Deliveries that fail validation
-are not accepted into `assets/`.
+contract. **Errors** fail the run; **warnings** are reported, and fail it
+only with `--strict`.
+
+Per file:
+
+| Check | Level |
+|---|---|
+| file name `<state>.<ext>` / `<state>-static.<ext>`, allowed extension | error |
+| canvas 512 × 512 (±8 px) | error |
+| badge corner (top-right 18 % × 18 %) fully transparent on every frame | error |
+| byte budget (§5) | error |
+| loop count: `done` / `error` = 1, `idle` / `working` / `sleeping` = 0 (§2) | error |
+| ≤ 12 fps, per-state frame caps (§5) | warning |
+| feet baseline: lowest opaque row in the bottom 20 % | warning |
+
+Per pet (cross-file). `diff` = mean absolute RGBA difference (0–255) of two
+512 × 512 frames:
+
+| Check | Rule | Level |
+|---|---|---|
+| static ↔ animation | some frame of the state's animation within 12 of its static — the static is a key pose of that animation (§5.2) | warning |
+| distinct one-shot statics | `done` / `error` static differs from the idle static by ≥ 3 | warning |
+| pose continuity | `done` / `error` first and last frames within 20 of idle's first frame (§6) | warning |
+| loop seam | `idle` / `working` / `sleeping`: diff(last, first) ≤ 1.3 × the mean frame-to-frame step | warning |
+| centering | horizontal centre of each state's first frame (alpha > 16 bbox) within 16 px across the pet's states | warning |
+
+Thresholds were calibrated on the Batch 1 art: clean files sit well inside
+them, and every file over them shows the problem when viewed.
+
+Run: `python3 scripts/validate-assets.py [--strict]`; validator tests:
+`python3 -m unittest discover -s scripts -p 'test_*.py'`.
+Deliveries that fail validation are not accepted into `assets/`.
