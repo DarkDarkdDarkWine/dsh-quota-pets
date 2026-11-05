@@ -1,0 +1,48 @@
+name: ci
+
+# Every push to main and every PR: plugin tests, validator tests, and the
+# asset gate (docs/pet-contract.md §8) in strict mode, so new art cannot
+# land with warnings.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plugin:
+    name: plugin tests (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: syntax
+        run: node --check lib/index.js && node --check lib/client.js
+      - name: tests
+        run: npm test
+
+  assets:
+    name: asset validator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install Pillow
+        run: python -m pip install --disable-pip-version-check "pillow>=10"
+      - name: validator tests
+        run: python -m unittest discover -s scripts -p 'test_*.py'
+      - name: validate assets (strict)
+        run: python scripts/validate-assets.py --strict

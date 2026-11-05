@@ -1,7 +1,7 @@
 {
   "name": "dsh-quota-pets",
-  "version": "0.3.0",
-  "description": "DeepSeek Harness client plugin: chibi pets for your LLM coding plans (GLM / MiniMax / Kimi / DeepSeek) — mood follows quota usage from dsh-quota-hub, the active session's model gets highlighted.",
+  "version": "0.4.0",
+  "description": "DeepSeek Harness client plugin: chibi pets for your LLM coding plans (GLM / MiniMax / Kimi / DeepSeek / MiMo) — mood follows quota usage from dsh-quota-hub, the active session's model gets highlighted.",
   "type": "module",
   "main": "./lib/index.js",
   "scripts": {
@@ -25,7 +25,8 @@
     "glm",
     "minimax",
     "kimi",
-    "deepseek"
+    "deepseek",
+    "mimo"
   ],
   "engines": {
     "node": ">=20"
