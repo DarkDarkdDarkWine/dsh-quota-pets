@@ -44,7 +44,8 @@
 ## 自定义形象
 
 素材放在 `assets/<petId>/<state>.webp`（动画）+ `<state>-static.webp` 或
-`.png`（reduced-motion 静态兜底），热加载秒级生效——命名规则见
+`.png`（reduced-motion 静态兜底），另可放过渡片段 `<from>-to-<to>.webp`，
+切换状态时先播一遍（GLM 翻开书、MiniMax 拿起记录板或坐下睡觉）；热加载秒级生效——命名规则见
 [assets/README.txt](assets/README.txt)，校验脚本
 `scripts/validate-assets.py`，完整规格见[资产合同](docs/pet-contract.md)。
 

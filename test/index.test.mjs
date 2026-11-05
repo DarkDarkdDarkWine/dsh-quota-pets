@@ -28,6 +28,49 @@ async function mount() {
   }
 }
 
+/** Minimal animated-WebP container: RIFF/WEBP + one ANMF chunk per frame duration. */
+function webpWithFrames(durations) {
+  const chunk = (tag, payload) => {
+    const pad = payload.length & 1 ? Buffer.alloc(1) : Buffer.alloc(0)
+    const head = Buffer.alloc(8)
+    head.write(tag, 0, 'ascii')
+    head.writeUInt32LE(payload.length, 4)
+    return Buffer.concat([head, payload, pad])
+  }
+  const anmf = (ms) => {
+    const p = Buffer.alloc(17) // 16-byte frame header + 1 odd byte of "bitstream"
+    p.writeUIntLE(ms, 12, 3)
+    return chunk('ANMF', p)
+  }
+  const body = Buffer.concat([Buffer.from('WEBP'), chunk('VP8X', Buffer.alloc(10)), chunk('ANIM', Buffer.alloc(6)), ...durations.map(anmf)])
+  const riff = Buffer.alloc(8)
+  riff.write('RIFF', 0, 'ascii')
+  riff.writeUInt32LE(body.length, 4)
+  return Buffer.concat([riff, body])
+}
+
+test('WebP duration sums the ANMF frame durations; non-animated or foreign data is 0', async () => {
+  const { webpDurationMs } = await import(`../lib/index.js?t=${Math.random()}`)
+  assert.equal(webpDurationMs(webpWithFrames([125, 125, 300])), 550)
+  assert.equal(webpDurationMs(Buffer.from('RIFF\0\0\0\0WEBPVP8 ')), 0)
+  assert.equal(webpDurationMs(Buffer.from('GIF89a')), 0)
+  assert.equal(webpDurationMs(Buffer.alloc(0)), 0)
+})
+
+test('health lists shipped transition clips with their duration', async () => {
+  const handlers = {}
+  const mod = await import(`../lib/index.js?t=${Math.random()}`)
+  mod.apply({ effect: (fn) => fn(), webServer: { register: (r) => (handlers[r.path] = r.handler) }, on() {} })
+  const health = await new Promise((resolve) =>
+    handlers['/dsh-quota-pets/health.json']({}, { writeHead() {}, end: (body) => resolve(JSON.parse(body)) }),
+  )
+  const clip = health.pets.glm['idle-to-working']
+  assert.equal(clip.anim.file, 'idle-to-working.webp')
+  assert.equal(clip.anim.ms, 1000)
+  assert.ok(!clip.extra, 'both ends are known states')
+  assert.equal(health.pets.glm.idle.anim.ms, undefined, 'plain states carry no duration')
+})
+
 test('clean run settles to done after the settle window', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'] })
   const host = await mount()
