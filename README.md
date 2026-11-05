@@ -1,5 +1,7 @@
 # dsh-quota-pets
 
+[![ci](https://github.com/DarkDarkdDarkWine/dsh-quota-pets/actions/workflows/ci.yml/badge.svg)](https://github.com/DarkDarkdDarkWine/dsh-quota-pets/actions/workflows/ci.yml)
+
 **Quota Pets** — a chibi desktop-pet companion for DeepSeek Harness, one mascot per LLM coding plan:
 
 | Pet | Provider | Theme color |

@@ -1,5 +1,7 @@
 # dsh-quota-pets
 
+[![ci](https://github.com/DarkDarkdDarkWine/dsh-quota-pets/actions/workflows/ci.yml/badge.svg)](https://github.com/DarkDarkdDarkWine/dsh-quota-pets/actions/workflows/ci.yml)
+
 [English README](README.md)
 
 **额度桌宠** — 给 DeepSeek Harness 配一套桌面宠物，每家 Coding Plan LLM 一只：
