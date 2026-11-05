@@ -140,6 +140,55 @@ class StaticIsIdleTest(unittest.TestCase):
         self.assertTrue(any("done.png" in w and "idle" in w for w in report.warnings), joined(report))
 
 
+def write_clip(root: Path, name: str, frames: list[FrameSpec], loop: int = 1, duration: int = 100, pet: str = "glm") -> Path:
+    images = [draw(*spec) for spec in frames]
+    images[0].save(root / pet / name, save_all=True, append_images=images[1:], duration=duration, loop=loop, lossless=True)
+    return root
+
+
+CLIP = [(0, None), (1, None), (3, None), (0, None)]  # idle f0 → working f0 (both at dx 0)
+
+
+def clip_warnings(report: "va.Report") -> list[str]:
+    return [m for m in report.warnings + report.errors if "-to-" in m]
+
+
+class TransitionClipTest(unittest.TestCase):
+    """Optional `<from>-to-<to>.webp` clips (contract §6.1)."""
+
+    def test_connected_one_shot_clip_is_clean(self) -> None:
+        report = run(lambda r: write_clip(write_pet(r), "idle-to-working.webp", CLIP))
+        self.assertEqual(clip_warnings(report), [])
+        self.assertEqual(report.errors, [])
+
+    def test_looping_clip_is_an_error(self) -> None:
+        report = run(lambda r: write_clip(write_pet(r), "idle-to-working.webp", CLIP, loop=0))
+        self.assertTrue(any("idle-to-working.webp" in e and "loop" in e for e in report.errors), joined(report))
+
+    def test_clip_that_does_not_start_on_the_from_pose_warns(self) -> None:
+        frames = [(0, None, True), (1, None), (3, None), (0, None)]
+        report = run(lambda r: write_clip(write_pet(r), "idle-to-working.webp", frames))
+        self.assertTrue(any("idle-to-working.webp" in w and "first frame is" in w for w in report.warnings), joined(report))
+
+    def test_clip_that_does_not_land_on_the_to_pose_warns(self) -> None:
+        frames = [(0, None), (1, None), (3, None), (0, None, True)]
+        report = run(lambda r: write_clip(write_pet(r), "idle-to-working.webp", frames))
+        self.assertTrue(any("idle-to-working.webp" in w and "last frame is" in w for w in report.warnings), joined(report))
+
+    def test_unknown_end_state_warns(self) -> None:
+        report = run(lambda r: write_clip(write_pet(r), "idle-to-dancing.webp", CLIP))
+        self.assertTrue(any("idle-to-dancing.webp" in w and "dancing" in w for w in report.warnings), joined(report))
+
+    def test_fast_clip_warns_on_fps(self) -> None:
+        # also guards the fps check itself: Pillow reports durations only for loaded frames
+        report = run(lambda r: write_clip(write_pet(r), "idle-to-working.webp", CLIP, duration=40))
+        self.assertTrue(any("idle-to-working.webp" in w and "fps" in w for w in report.warnings), joined(report))
+
+    def test_long_clip_warns(self) -> None:
+        report = run(lambda r: write_clip(write_pet(r), "idle-to-working.webp", CLIP, duration=500))
+        self.assertTrue(any("idle-to-working.webp" in w and "ms" in w for w in report.warnings), joined(report))
+
+
 class StaticIsWorkingTest(unittest.TestCase):
     """Reduced-motion users see only statics: done/error must not look like working."""
 

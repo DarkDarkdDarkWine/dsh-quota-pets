@@ -49,7 +49,9 @@ in [docs/pet-capabilities.md](docs/pet-capabilities.md) (Chinese).
 ## Custom avatars
 
 Assets live in `assets/<petId>/<state>.webp` (animated) plus
-`<state>-static.webp` or `.png` (static fallback for reduced-motion), hot-swapped
+`<state>-static.webp` or `.png` (static fallback for reduced-motion), plus
+optional transition clips `<from>-to-<to>.webp` played once between states
+(GLM opens its book, MiniMax picks up its board or sits down to sleep), hot-swapped
 within seconds — naming rules in [assets/README.txt](assets/README.txt),
 validation via `scripts/validate-assets.py`, full spec in the asset
 [contract](docs/pet-contract.md).

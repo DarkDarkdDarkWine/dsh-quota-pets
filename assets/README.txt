@@ -8,6 +8,7 @@
   assets/deepseek/done.webp      一次完成庆祝（~3s 后回 idle）
   assets/deepseek/error.webp     出错持帧（到下次 run）
   assets/deepseek/sleeping.webp  空闲 10 分钟睡觉
+  assets/glm/idle-to-working.webp  可选过渡片段：状态切换时先播一次（≤1.5s，只用 webp）
 
 宠物文件夹：glm / minimax / kimi / deepseek / mimo（default 仅供开发者状态预览）
 状态名：idle / working / done / error / sleeping（Batch 2: waiting / wake / stumble）
@@ -18,6 +19,6 @@
 放好文件后刷新页面即生效（宿主 3 秒重扫）。
 写完素材跑 `python3 scripts/validate-assets.py` 校验：尺寸、透明角、字节预算、
 循环次数，以及静态图与动画是否对得上、一次性动作能否接回待机、循环接缝、
-各状态水平位置（规则见 docs/pet-contract.md §8）。加 --strict 时警告也算失败。
+各状态水平位置、过渡片段首尾能否接上（规则见 docs/pet-contract.md §8）。加 --strict 时警告也算失败。
 
 授权：本目录图片为 CC BY-NC-SA 4.0（不可商用），署名见 LICENSE。

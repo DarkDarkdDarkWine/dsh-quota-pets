@@ -1,4 +1,12 @@
-# Pet Asset Contract v1.7.3 (frozen for Batch 1)
+# Pet Asset Contract v1.8 (frozen for Batch 1)
+
+Changelog v1.7.3 → v1.8 (additive, no change to existing art): optional
+**transition clips** `<from>-to-<to>.webp` (§6.1). When the shown state
+changes, the plugin plays the matching clip once, then the new state;
+without one it routes through `idle` with whichever legs exist. A pet
+with no clips behaves exactly as before. The validator gains clip checks
+(§8) and its ≤ 12 fps check now actually runs (it read no frame durations
+before, so it never fired).
 
 Changelog v1.7.2 → v1.7.3 (enforcement only): a `done` / `error` static
 must also differ from the **working** static (diff ≥ 3), not only from
@@ -107,8 +115,9 @@ conversion owned by the builder, not a contract change. Never ship a raw
 atlas.
 
 The old flat dot-style naming (`glm.warn.png`) is **deprecated**. No
-hyphens anywhere, except the one reserved suffix `-static`
-(`<state>-static.webp`, v1.5).
+hyphens anywhere, except the reserved suffix `-static`
+(`<state>-static.webp`, v1.5) and the transition separator `-to-`
+(`<from>-to-<to>.webp`, v1.8, §6.1).
 
 ## 2. States (Batch 1)
 
@@ -194,13 +203,36 @@ dimming, working glow) may touch every pixel.
   frame (the run can end on any working frame, so the working loop's rest
   frame is the reference). Plugin state flow: `idle → working`,
   `working → done | error`, `done → idle` (after ~3 s), `error → working`
-  (next run), `idle ↔ sleeping`, `sleeping → working`. There are no
-  in-between transition clips yet; until there are, each pair above must
-  connect directly.
+  (next run), `idle ↔ sleeping`, `sleeping → working`. Each pair above
+  must connect directly unless a transition clip (§6.1) bridges it.
 - `sleeping` should end its loop in a pose a short `wake` one-shot
   (Batch 2) can start from.
 - Frame timing inside a state is the artist's; code controls only display
   duration and remounting (one-shots re-mount to replay).
+
+### 6.1 Transition clips (optional, v1.8)
+
+A clip bridges two states whose poses differ too much to cut between
+(picking up a board, sitting down to sleep, opening a book).
+
+- File: `assets/<petId>/<from>-to-<to>.webp`, both ends Batch-1 states,
+  e.g. `idle-to-working.webp`, `sleeping-to-idle.webp`. Animated WebP only
+  (the host reads the clip length from the WebP frame headers); no static
+  variant — clips never show under reduced motion.
+- One-shot (loop = 1), ≤ 14 frames, ≤ 1.5 s. The badge and name tag
+  switch to the new state at once; only the picture waits for the clip,
+  so keep it short.
+- First frame pose-compatible with `<from>`'s first frame, last frame
+  with `<to>`'s first frame (same thresholds as §6). Same canvas, badge
+  corner, edge and budget rules as any animation (§3–§5).
+- Plugin routing for a change A → B: `A-to-B` if shipped; otherwise
+  `A-to-idle` then `idle-to-B`, whichever of the two exist (a missing
+  leg is a cut). So `idle-to-working` also bridges `sleeping → working`,
+  `done → working` and `error → working`, because those states end on (or
+  next to) the idle pose. `done` / `error` are never entered through idle —
+  they start on the working pose — so only a direct `working-to-done`
+  would play there. A state change while a clip plays replans from that
+  clip's target.
 
 ## 7. Fallback chain (code behavior, for reference)
 
@@ -228,6 +260,8 @@ Per file:
 | ≤ 12 fps, per-state frame caps (§5) | warning |
 | feet baseline: lowest opaque row in the bottom 20 % (§3) | warning |
 | no cut-off edges: no pixel with alpha > 128 on the outermost 1 px border, any frame (§3) | warning |
+| transition clip loop count = 1 (§6.1) | error |
+| transition clip ≤ 14 frames and ≤ 1.5 s (§6.1) | warning |
 
 Per pet (cross-file). `diff` = mean absolute difference (0–255) of two
 512 × 512 frames in premultiplied RGBA (invisible pixels count as equal):
@@ -239,6 +273,7 @@ Per pet (cross-file). `diff` = mean absolute difference (0–255) of two
 | pose continuity | `done` / `error`: first frame within 20 of working's first frame, last frame within 20 of idle's first frame (§6) | warning |
 | loop seam | `idle` / `working` / `sleeping`: diff(last, first) ≤ 1.3 × the mean frame-to-frame step, and the last frame must not repeat the first (diff < 0.05) | warning |
 | centering | horizontal centre of each state's first frame (alpha > 16 bbox) within 16 px across the pet's states | warning |
+| transition clips | `<from>-to-<to>`: both ends are states this pet animates; WebP, no static; first frame within 20 of `<from>`'s first frame, last frame within 20 of `<to>`'s first frame (§6.1) | warning |
 
 Thresholds were calibrated on the Batch 1 art: clean files sit well inside
 them, and every file over them shows the problem when viewed.

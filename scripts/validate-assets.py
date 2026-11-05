@@ -29,6 +29,12 @@ Checks every file under assets/<petId>/ against the contract.
       and the last frame must not repeat the first (that stalls the loop)
     - centering: horizontal centre of every state's first frame within
       16 px across the pet's states
+  transition clips `<from>-to-<to>.webp` (optional, contract §6.1):
+    - one-shot (loop = 1) — an error otherwise; ≤ 14 frames, ≤ 1500 ms
+    - both ends are known states that ship an animation
+    - first frame within 20 of <from>'s first frame, last frame within 20
+      of <to>'s first frame (the clip must not jump in or out)
+    - WebP only (the plugin reads the clip length from WebP frame headers)
 
 Usage: python3 scripts/validate-assets.py [assets_dir] [--strict]
   --strict  also exit 1 when there are warnings
@@ -59,6 +65,10 @@ FPS_CAP = 12.0
 PET_IDS = {"glm", "minimax", "kimi", "deepseek", "mimo", "default"}
 BATCH1_STATES = ("idle", "working", "done", "error", "sleeping")
 ONE_SHOT_STATES = {"done", "error", "wake", "stumble"}
+KNOWN_STATES = set(BATCH1_STATES) | set(FRAME_CAPS)
+TRANSITION_SEP = "-to-"
+TRANSITION_FRAME_CAP = 14
+TRANSITION_MS_MAX = 1500  # the picture lags the state while a clip plays
 LOOP_STATES = ("idle", "working", "sleeping")
 ANIM_EXT = {".webp", ".apng", ".gif"}
 STATIC_EXT = {".png"}
@@ -181,21 +191,38 @@ def check_file(path: Path, report: Report) -> None:
     check_baseline(rel, frames[0], report)
 
 
+def frame_durations(img: Image.Image) -> list[int]:
+    """Per-frame durations in ms. Pillow fills info["duration"] only once a frame is loaded."""
+    out = []
+    for frame in ImageSequence.Iterator(img):
+        frame.load()
+        out.append(int(frame.info.get("duration", 0) or 0))
+    return out
+
+
+def is_transition(state: str) -> bool:
+    return TRANSITION_SEP in state
+
+
 def check_animation(rel: str, state: str, img: Image.Image, n: int, report: Report) -> None:
-    cap = FRAME_CAPS.get(state)
+    clip = is_transition(state)
+    cap = TRANSITION_FRAME_CAP if clip else FRAME_CAPS.get(state)
     if cap and n > cap:
         report.warn(f"{rel}: {n} frames exceeds cap {cap} for state '{state}'")
-    durations = [d for d in ((f.info.get("duration", 0) or 0) for f in ImageSequence.Iterator(img)) if d > 0]
+    durations = [d for d in frame_durations(img) if d > 0]
     if durations:
         avg = sum(durations) / len(durations)
         fps = 1000.0 / avg if avg > 0 else 0
         if fps > FPS_CAP + 0.5:
             report.warn(f"{rel}: average {fps:.1f} fps exceeds {FPS_CAP:.0f} fps cap")
+    if clip and (total := sum(durations)) > TRANSITION_MS_MAX:
+        report.warn(f"{rel}: clip runs {total} ms (> {TRANSITION_MS_MAX} ms) — the picture lags the state while it plays")
     loop = img.info.get("loop")
-    want = 1 if state in ONE_SHOT_STATES else 0
+    want = 1 if clip or state in ONE_SHOT_STATES else 0
     if loop != want:
         kind = "one-shot (play once, hold last frame)" if want == 1 else "looping (infinite)"
-        report.err(f"{rel}: loop count {loop}, expected {want} for {kind} state '{state}'")
+        what = "transition clip" if clip else "state"
+        report.err(f"{rel}: loop count {loop}, expected {want} for {kind} {what} '{state}'")
 
 
 def check_baseline(rel: str, first: Image.Image, report: Report) -> None:
@@ -227,6 +254,34 @@ def check_pet(pet_dir: Path, report: Report) -> None:
     check_pose_continuity(pet_dir, anims, report)
     check_loop_seams(pet_dir, anims, report)
     check_centering(pet_dir, anims, report)
+    check_transitions(pet_dir, anims, report)
+
+
+def check_transitions(pet_dir: Path, anims: dict, report: Report) -> None:
+    """`<from>-to-<to>` clips bridge two states the plugin already shows (contract §6.1)."""
+    for path in sorted(pet_dir.iterdir()):
+        state, forced_static = split_name(path)
+        if not path.is_file() or not is_transition(state):
+            continue
+        if forced_static or path.suffix.lower() != ".webp":
+            report.warn(f"{path}: transition clips ship as animated .webp only (the plugin reads their length from WebP frame headers); this file is never shown")
+            continue
+        start, _, end = state.partition(TRANSITION_SEP)
+        unknown = [s for s in (start, end) if s not in KNOWN_STATES or s not in anims]
+        if unknown or start == end:
+            why = f"no animated state '{unknown[0]}' for this pet" if unknown else "both ends are the same state"
+            report.warn(f"{path}: {why} — the clip can never play")
+            continue
+        frames = canvas_frames(path)
+        if not frames:
+            continue
+        gaps = []
+        if (first := diff(frames[0], anims[start][0])) > POSE_CONTINUITY_MAX:
+            gaps.append(f"first frame is {first:.1f} from {start}'s first frame")
+        if (last := diff(frames[-1], anims[end][0])) > POSE_CONTINUITY_MAX:
+            gaps.append(f"last frame is {last:.1f} from {end}'s first frame")
+        if gaps:
+            report.warn(f"{path}: {'; '.join(gaps)} (> {POSE_CONTINUITY_MAX:g}) — a clip must start on the pose it leaves and land on the pose it enters (contract §6.1)")
 
 
 def check_static_match(pet_dir: Path, anims: dict, statics: dict, static_frames: dict, report: Report) -> None:

@@ -10,12 +10,17 @@ const STORAGE_KEY = 'dsh-quota-pets:state-v1'
 const MIN = 60_000
 
 /** Fresh client instance with its own stubs. */
-function loadClient({ stored = null, fetchImpl = null } = {}) {
+function loadClient({ stored = null, fetchImpl = null, reducedMotion = false } = {}) {
   const store = stored === null ? {} : { [STORAGE_KEY]: JSON.stringify(stored) }
   const fetched = []
   const microtasks = []
   let factory = null
-  const window = { __ModuleLoader__: { load: (mod) => (factory = mod.factory) }, innerWidth: 1200, innerHeight: 800 }
+  const window = {
+    __ModuleLoader__: { load: (mod) => (factory = mod.factory) },
+    innerWidth: 1200,
+    innerHeight: 800,
+    matchMedia: (query) => ({ matches: reducedMotion && query.includes('reduce') }),
+  }
   const localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => (store[k] = v) }
   const document = { body: null, visibilityState: 'visible' }
   const fetch = async (url) => {
@@ -229,6 +234,105 @@ test('asset fallback: state anim → state static → idle static → idle anim 
   assert.match(src('done'), /\/idle\.webp/)
   rt.health = null
   assert.match(src('working'), /^data:image\/svg\+xml/)
+})
+
+test('a broken asset reported by its <img> src falls back down the chain', () => {
+  const { api } = loadClient()
+  const file = (name) => ({ file: name, v: 7 })
+  api.runtime.health = { ok: true, pets: { glm: { working: { anim: file('working.webp'), static: file('working-static.webp') } } } }
+  const first = api.avatarSrcFor('glm', 'working').src
+  api.markFailed('glm', first + '&rk=2') // what the img error handler actually passes
+  assert.match(api.avatarSrcFor('glm', 'working').src, /working-static\.webp/)
+})
+
+// ---- transition clips (contract §6.1) -------------------------------------------
+
+const clipHealth = (clips) => {
+  const file = (name, ms) => ({ file: name, v: 1, ...(ms ? { ms } : {}) })
+  const pet = {}
+  for (const s of ['idle', 'working', 'done', 'error', 'sleeping']) pet[s] = { anim: file(s + '.webp'), static: file(s + '-static.webp') }
+  for (const [key, ms] of Object.entries(clips)) pet[key] = { anim: file(key + '.webp', ms) }
+  return { ok: true, pets: { glm: pet } }
+}
+const newPet = () => ({ id: 'glm', shown: null, clips: [], clipStart: 0 })
+const keys = (plan) => plan.map((c) => c.key)
+
+test('a direct clip plays for its duration, then the new state shows', () => {
+  const { api } = loadClient()
+  api.runtime.health = clipHealth({ 'idle-to-working': 1000 })
+  const pet = newPet()
+  assert.equal(api.stepTransition(pet, 'idle', 0), null, 'first render never plays a clip')
+  const step = api.stepTransition(pet, 'working', 100)
+  assert.equal(step.clip.key, 'idle-to-working')
+  assert.match(step.clip.url, /\/glm\/idle-to-working\.webp\?v=1$/)
+  assert.equal(step.endsAt, 1100)
+  assert.equal(api.stepTransition(pet, 'working', 1099).clip.key, 'idle-to-working')
+  assert.equal(api.stepTransition(pet, 'working', 1100), null)
+})
+
+test('without a direct clip the route goes through idle, legs that exist only', () => {
+  const { api } = loadClient()
+  api.runtime.health = clipHealth({ 'idle-to-working': 1000, 'sleeping-to-idle': 600 })
+  assert.deepEqual(keys(api.transitionPlan('glm', 'sleeping', 'working')), ['sleeping-to-idle', 'idle-to-working'])
+  assert.deepEqual(keys(api.transitionPlan('glm', 'done', 'working')), ['idle-to-working'], 'done ends on the idle pose')
+  assert.deepEqual(keys(api.transitionPlan('glm', 'working', 'done')), [], 'done starts on the working pose')
+  assert.deepEqual(keys(api.transitionPlan('glm', 'idle', 'sleeping')), [], 'no leg through idle when idle is an end')
+})
+
+test('done/error are entered straight from working, never through idle', () => {
+  const { api } = loadClient()
+  // found in the browser harness: with working-to-idle shipped, working → done
+  // played the put-away clip first, though done starts on the working pose
+  api.runtime.health = clipHealth({ 'idle-to-working': 750, 'working-to-idle': 750 })
+  assert.deepEqual(keys(api.transitionPlan('glm', 'working', 'done')), [])
+  assert.deepEqual(keys(api.transitionPlan('glm', 'working', 'error')), [])
+  assert.deepEqual(keys(api.transitionPlan('glm', 'sleeping', 'done')), [])
+  api.runtime.health = clipHealth({ 'working-to-done': 500 })
+  assert.deepEqual(keys(api.transitionPlan('glm', 'working', 'done')), ['working-to-done'], 'a direct clip still plays')
+})
+
+test('chained clips play back to back', () => {
+  const { api } = loadClient()
+  api.runtime.health = clipHealth({ 'idle-to-working': 1000, 'sleeping-to-idle': 600 })
+  const pet = newPet()
+  api.stepTransition(pet, 'sleeping', 0)
+  assert.equal(api.stepTransition(pet, 'working', 0).clip.key, 'sleeping-to-idle')
+  const second = api.stepTransition(pet, 'working', 650)
+  assert.equal(second.clip.key, 'idle-to-working')
+  assert.equal(second.endsAt, 1600)
+  assert.equal(api.stepTransition(pet, 'working', 1600), null)
+})
+
+test('an activity change mid-clip replans from the clip target', () => {
+  const { api } = loadClient()
+  api.runtime.health = clipHealth({ 'idle-to-working': 1000, 'working-to-idle': 1000 })
+  const pet = newPet()
+  api.stepTransition(pet, 'idle', 0)
+  api.stepTransition(pet, 'working', 0)
+  assert.equal(api.stepTransition(pet, 'idle', 300).clip.key, 'working-to-idle')
+  assert.equal(api.stepTransition(pet, 'done', 400), null, 'idle → done has no clip: cut straight to done')
+})
+
+test('clips are skipped under reduced motion, preview art, missing duration or a load failure', () => {
+  const reduced = loadClient({ reducedMotion: true })
+  reduced.api.runtime.health = clipHealth({ 'idle-to-working': 1000 })
+  assert.deepEqual(reduced.api.transitionPlan('glm', 'idle', 'working'), [])
+
+  const { api } = loadClient()
+  api.runtime.health = clipHealth({ 'idle-to-working': 0 })
+  assert.deepEqual(api.transitionPlan('glm', 'idle', 'working'), [], 'no ms → no clip (APNG/GIF or unparsable)')
+
+  api.runtime.health = clipHealth({ 'idle-to-working': 1000 })
+  api.customArt.glm = 'data:image/png;base64,CCCC'
+  assert.deepEqual(api.transitionPlan('glm', 'idle', 'working'), [])
+  delete api.customArt.glm
+
+  const pet = newPet()
+  api.stepTransition(pet, 'idle', 0)
+  const step = api.stepTransition(pet, 'working', 0)
+  api.markFailed('glm', step.clip.url + '&rk=1')
+  assert.equal(api.stepTransition(pet, 'working', 10), null, 'a clip that failed to load is dropped')
+  assert.deepEqual(api.transitionPlan('glm', 'idle', 'working'), [])
 })
 
 // ---- persistence (bug: preview art filled the shared localStorage) ---------------

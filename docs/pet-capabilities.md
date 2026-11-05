@@ -30,6 +30,11 @@
 - 系统开启「减少动态效果」时只用静态图。
 - 缺图回退链：`<state>` 动画 → `<state>` 静态 → `idle` 静态 → `idle`
   动画 → 内置 SVG 占位。
+- **过渡片段**（可选，contract §6.1）：`<from>-to-<to>.webp`，状态切换时先播一遍
+  再进入新状态；没有直达片段就经过 idle 拼两段（例如睡醒干活 =
+  `sleeping-to-idle` + `idle-to-working`）。角标和名牌立即切换，只有画面等片段播完。
+  减少动态效果时不播。当前有：GLM `idle↔working`（翻书），MiniMax `idle↔working`
+  （拿板 / 放板）、`idle↔sleeping`（坐下 / 起身）。
 
 第二批（未实现，规格见 contract §2）：`waiting`（等待审批）、`wake`
 （睡醒）、`stumble`。
